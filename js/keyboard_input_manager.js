@@ -6,7 +6,8 @@ function KeyboardInputManager() {
     this.eventTouchstart    = "MSPointerDown";
     this.eventTouchmove     = "MSPointerMove";
     this.eventTouchend      = "MSPointerUp";
-  } else {
+  }
+  else {
     this.eventTouchstart    = "touchstart";
     this.eventTouchmove     = "touchmove";
     this.eventTouchend      = "touchend";
