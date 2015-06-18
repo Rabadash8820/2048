@@ -3,31 +3,34 @@ function LocalStorageManager() {
     this.bestScoreKey = "bestScore";
     this.gameStateKey = "gameState";
 
+    // If local web storage is not supported then use a "fakeStorage" object to simulate it
     var supported = this.localStorageSupported();
     this.storage = supported ? window.localStorage : window.fakeStorage;
 }
 
+// OBJECT TO SIMULATE LOCAL WEB STORAGE
 window.fakeStorage = {
     _data: {},
     setItem:    function (id, val) {
-        return this._data[id] = String(val);
+        this._data[id] = String(val);
     },
     getItem:    function (id) {
-        return this._data.hasOwnProperty(id) ? this._data[id] : undefined;
+        return this._data.hasOwnProperty(id) ? this._data[id] : null;
     },
     removeItem: function (id) {
-        return delete this._data[id];
+        delete this._data[id];
     },
     clear:      function () {
-        return this._data = {};
+        this._data = {};
     }
 };
 
+// DETERMINES IF LOCAL WEB STORAGE IS SUPPORTED
 LocalStorageManager.prototype.localStorageSupported = function () {
-    var testKey = "test";
-    var storage = window.localStorage;
-
+    // Check whether local web storage is supported by attempting to store some test data
     try {
+        var testKey = "test";
+        var storage = window.localStorage;
         storage.setItem(testKey, "1");
         storage.removeItem(testKey);
         return true;
@@ -39,7 +42,8 @@ LocalStorageManager.prototype.localStorageSupported = function () {
 
 // BEST SCORE GETTERS/SETTERS
 LocalStorageManager.prototype.getBestScore = function () {
-  return this.storage.getItem(this.bestScoreKey) || 0;
+    var score = this.storage.getItem(this.bestScoreKey);
+    return (score !== null) ? score : 0;
 }
 LocalStorageManager.prototype.setBestScore = function (score) {
   this.storage.setItem(this.bestScoreKey, score);

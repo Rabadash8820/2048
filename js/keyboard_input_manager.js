@@ -1,7 +1,23 @@
 // CONSTRUCTOR
 function KeyboardInputManager() {
-    // Dictionary, maps game event names to arrays of listeners
+    // Dictionary that maps game event names to arrays of listeners
     this.events = {};
+
+    // Dictionary that maps keycodes to movement directions
+    this.map = {
+        38: 0, // Up
+        39: 1, // Right
+        40: 2, // Down
+        37: 3, // Left
+        75: 0, // Vim up
+        76: 1, // Vim right
+        74: 2, // Vim down
+        72: 3, // Vim left
+        87: 0, // W
+        68: 1, // D
+        83: 2, // S
+        65: 3, // A
+    };
 
     // Add listeners for key presses, mouse clicks, and touches
     this.listen();
@@ -67,22 +83,6 @@ KeyboardInputManager.prototype.defineTouchEvents = function () {
 
 // EVENT LISTENERS
 KeyboardInputManager.prototype.keyDownListener = function (event) {
-    // Define a Dictionary that maps keycodes to movement directions
-    this.map = {
-        38: 0, // Up
-        39: 1, // Right
-        40: 2, // Down
-        37: 3, // Left
-        75: 0, // Vim up
-        76: 1, // Vim right
-        74: 2, // Vim down
-        72: 3, // Vim left
-        87: 0, // W
-        68: 1, // D
-        83: 2, // S
-        65: 3, // A
-    };
-
     // If the player pressed a modifier key then just return
     var modifiers = event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
     if (modifiers) return;
@@ -151,18 +151,21 @@ KeyboardInputManager.prototype.touchEndListener = function (event) {
 
 // METHODS TO EMIT/REGISTER GAME EVENTS
 KeyboardInputManager.prototype.on = function (name, listener) {
-    if (!(name in this.events))
+    if (!this.events.hasOwnProperty(name))
         this.events[name] = [];
     this.events[name].push(listener);
 }
 KeyboardInputManager.prototype.emit = function (gameEventName, data, inputEvent) {
-    // Call each event listener in the array of listeners associated with this event
+    // The input event is being handled, so prevent its default action
+    inputEvent.preventDefault();
+
+    // If this event does not have any listeners then just return
+    if (!this.events.hasOwnProperty(gameEventName)) return;
     var listeners = this.events[gameEventName];
     if (listeners.length === 0) return;
+
+    // Otherwise, call each listener
     listeners.forEach(function (listener) {
         listener(data);
     });
-
-    // The input event has been handled, so prevent its default action
-    inputEvent.preventDefault();
 }
