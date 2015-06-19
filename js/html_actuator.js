@@ -1,10 +1,10 @@
 // CONSTRUCTOR
 function HTMLActuator() {
     // Store some document elements
-    this.tileContainer    = document.querySelector(".tile-container");
-    this.scoreContainer   = document.querySelector(".score-container");
-    this.bestContainer    = document.querySelector(".best-container");
-    this.messageContainer = document.querySelector(".game-message");
+    this.tileContainer    = document.querySelector("div.tile-container");
+    this.scoreContainer   = document.querySelector("div.score-container");
+    this.bestContainer    = document.querySelector("div.best-container");
+    this.messageContainer = document.querySelector("div.game-message");
 
     // Initialize the score
     this.score = 0;
@@ -37,13 +37,12 @@ HTMLActuator.prototype.actuate = function (grid, metadata) {
 
 // Continues the game (both restart and keep playing)
 HTMLActuator.prototype.continueGame = function () {
-  this.clearMessage();
+    this.clearMessage();
 };
 
 HTMLActuator.prototype.clearContainer = function (container) {
-  while (container.firstChild) {
-    container.removeChild(container.firstChild);
-  }
+    while (container.firstChild !== null)
+        container.removeChild(container.firstChild);
 };
 
 HTMLActuator.prototype.addTile = function (tile) {
@@ -91,7 +90,7 @@ HTMLActuator.prototype.addTile = function (tile) {
 };
 
 HTMLActuator.prototype.applyClasses = function (element, classes) {
-  element.setAttribute("class", classes.join(" "));
+    element.setAttribute("class", classes.join(" "));
 };
 
 HTMLActuator.prototype.normalizePosition = function (position) {

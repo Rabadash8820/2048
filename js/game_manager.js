@@ -18,18 +18,17 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
 
 // METHODS
 GameManager.prototype.setup = function () {
-    // Set up the game
+    // If a previous game's state is in storage, then restore that game
     var previousState = this.storageManager.getGameState();
-
-    // Reload the game from a previous game if present
-    if (previousState) {
-        this.grid = new Grid(previousState.grid.size,
-                                    previousState.grid.cells); // Reload grid
+    if (previousState !== null) {
+        this.grid = new Grid(previousState.grid.size, previousState.grid.cells);
         this.score = previousState.score;
         this.over = previousState.over;
         this.won = previousState.won;
         this.keepPlaying = previousState.keepPlaying;
     }
+
+    // Otherwise, begin a new game
     else {
         this.grid = new Grid(this.size);
         this.score = 0;
@@ -37,7 +36,6 @@ GameManager.prototype.setup = function () {
         this.won = false;
         this.keepPlaying = false;
 
-        // Add the initial tiles
         this.addStartTiles();
     }
 
