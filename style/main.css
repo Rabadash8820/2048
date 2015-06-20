@@ -509,7 +509,7 @@ hr {
     clear: both;
 }
 
-.step-button, .play-button, .inc-speed-button, .dec-speed-button {
+.step-button, .solve-button, .inc-speed-button, .dec-speed-button {
     margin-right: 5px;
     display: block;
     background: #8f7a66;
@@ -563,7 +563,7 @@ hr {
     box-sizing: border-box;
     margin-top: 2px; }
     
-  .step-button, .play-button, .inc-speed-button, .dec-speed-button {
+  .step-button, .solve-button, .inc-speed-button, .dec-speed-button {
     width: 42%;
     padding: 0;
     display: block;

@@ -38,10 +38,13 @@ KeyboardInputManager.prototype.listenForKeys = function () {
 }
 KeyboardInputManager.prototype.listenForPress = function () {
     // Listen for clicks/presses that restart the game
-    var restartButton = document.querySelector("a.retry-button, a.restart-button");
+    var retryButton = document.querySelector("a.retry-button");
+    var restartButton = document.querySelector("a.restart-button");
     var restartListener = this.emit.bind(this, "restart", undefined);
     restartButton.addEventListener("click", restartListener);
+    retryButton.addEventListener("click", restartListener);
     restartButton.addEventListener(this.eventTouchend, restartListener);
+    retryButton.addEventListener(this.eventTouchend, restartListener);
 
     // Listen for clicks/presses on the Keep Playing button
     var playButton = document.querySelector("a.keep-playing-button");
@@ -49,15 +52,25 @@ KeyboardInputManager.prototype.listenForPress = function () {
     playButton.addEventListener("click", playListener);
     playButton.addEventListener(this.eventTouchend, playListener);
 
-    // Listen for clicks/presses that affect the Auto-Solver
+    // Listen for clicks/presses that affect the Solver's speed
     var incButton = document.querySelector("a.inc-speed-button");
     var decButton = document.querySelector("a.dec-speed-button");
-    var incListener = this.emit.bind(this, "autoSolveSpeed", 1);
-    var decListener = this.emit.bind(this, "autoSolveSpeed", -1);
+    var incListener = this.emit.bind(this, "solverSpeed", 1);
+    var decListener = this.emit.bind(this, "solverSpeed", -1);
     incButton.addEventListener("click", incListener);
     decButton.addEventListener("click", decListener);
     incButton.addEventListener(this.eventTouchend, incListener);
     decButton.addEventListener(this.eventTouchend, decListener);
+
+    // Listen for clicks/presses that invoke the Solver
+    var solveButton = document.querySelector("a.solve-button");
+    var stepButton = document.querySelector("a.step-button");
+    var solveListener = this.emit.bind(this, "toggleSolver", undefined);
+    var stepListener = this.emit.bind(this, "stepSolver", undefined);
+    solveButton.addEventListener("click", solveListener);
+    stepButton.addEventListener("click", stepListener);
+    solveButton.addEventListener(this.eventTouchend, solveListener);
+    stepButton.addEventListener(this.eventTouchend, stepListener);
 }
 KeyboardInputManager.prototype.listenForSwipe = function () {
     // Register listeners for swipe events with the game container
@@ -98,9 +111,9 @@ KeyboardInputManager.prototype.keyDownListener = function (event) {
 
     // Plus/minus keys control the auto-solver's speed
     if (event.which === 107)
-        this.emit.call(this, "autoSolveSpeed", 1, event);
+        this.emit.call(this, "solverSpeed", 1, event);
     if (event.which === 109)
-        this.emit.call(this, "autoSolveSpeed", -1, event);
+        this.emit.call(this, "solverSpeed", -1, event);
 }
 KeyboardInputManager.prototype.touchStartListener = function (event) {
     // If player is touching with more than 1 finger then just return
@@ -150,10 +163,15 @@ KeyboardInputManager.prototype.touchEndListener = function (event) {
 }
 
 // METHODS TO EMIT/REGISTER GAME EVENTS
-KeyboardInputManager.prototype.on = function (name, listener) {
-    if (!this.events.hasOwnProperty(name))
-        this.events[name] = [];
-    this.events[name].push(listener);
+KeyboardInputManager.prototype.on = function (listener) {
+    // Add the listener to every provided event
+    if (arguments.length <= 1) return;
+    for (var arg = 1; arg < arguments.length; ++arg) {
+        var name = arguments[arg];
+        if (!this.events.hasOwnProperty(name))
+            this.events[name] = [];
+        this.events[name].push(listener);
+    }
 }
 KeyboardInputManager.prototype.emit = function (gameEventName, data, inputEvent) {
     // The input event is being handled, so prevent its default action
