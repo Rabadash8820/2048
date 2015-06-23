@@ -5,25 +5,25 @@ function KeyboardInputManager() {
 
     // Dictionary that maps keycodes to movement directions
     this.map = {
-        38: 0, // Up
-        39: 1, // Right
-        40: 2, // Down
-        37: 3, // Left
-        75: 0, // Vim up
-        76: 1, // Vim right
-        74: 2, // Vim down
-        72: 3, // Vim left
-        87: 0, // W
-        68: 1, // D
-        83: 2, // S
-        65: 3, // A
+        38: { x: 0,  y: -1 }, // Up
+        39: { x: 1,  y: 0  }, // Right
+        40: { x: 0,  y: 1  }, // Down
+        37: { x: -1, y: 0  }, // Left
+        75: { x: 0,  y: -1 }, // Vim up
+        76: { x: 1,  y: 0  }, // Vim right
+        74: { x: 0,  y: 1  }, // Vim down
+        72: { x: -1, y: 0  }, // Vim left
+        87: { x: 0,  y: -1 }, // W
+        68: { x: 1,  y: 0  }, // D
+        83: { x: 0,  y: 1  }, // S
+        65: { x: -1, y: 0  }, // A
     };
 
     // Add listeners for key presses, mouse clicks, and touches
     this.listen();
 }
 
-// METHODS TO REGISTER EVENT LISTENERS
+// METHODS TO REGISTER INPUT EVENT LISTENERS
 KeyboardInputManager.prototype.listen = function () {
     // Add listeners for key presses
     this.listenForKeys();
@@ -94,7 +94,7 @@ KeyboardInputManager.prototype.defineTouchEvents = function () {
     }
 }
 
-// EVENT LISTENERS
+// INPUT EVENT LISTENERS
 KeyboardInputManager.prototype.keyDownListener = function (event) {
     // If the player pressed a modifier key then just return
     var modifiers = event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
@@ -151,14 +151,16 @@ KeyboardInputManager.prototype.touchEndListener = function (event) {
         touchEndClientY = event.changedTouches[0].clientY;
     }
 
-    // If the absolute delta-x or delta-y of this swipe was large enough, then emit the corresponding move event
+    // If the absolute delta-x or delta-y of this swipe was large enough,
+    // then emit a move event in the corresponding direction
     var dx = touchEndClientX - this.touchStartClientX;
     var dy = touchEndClientY - this.touchStartClientY;
     var absDx = Math.abs(dx);
     var absDy = Math.abs(dy);
     if (Math.max(absDx, absDy) > 10) {
-        var direction = (absDx > absDy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0);    // (right : left) : (down : up)
-        this.emit.call(this, "move", direction, event);
+        var x = (absDx > absDy) ? this.sign(dx) : 0;
+        var y = (absDy > absDx) ? this.sign(dy) : 0;
+        this.emit.call(this, "move", { x: x, y: y }, event);
     }
 }
 
@@ -186,4 +188,11 @@ KeyboardInputManager.prototype.emit = function (gameEventName, data, inputEvent)
     listeners.forEach(function (listener) {
         listener(data);
     });
+}
+
+// HELPER FUNCTIONS
+KeyboardInputManager.prototype.sign = function (value) {
+    if (value < 0) return -1;
+    else if (value > 0) return 1;
+    else return 0;
 }

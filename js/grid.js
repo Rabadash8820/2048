@@ -32,37 +32,100 @@ Grid.prototype.copyOfCells = function (originalCells) {
     return cells;
 }
 
-// METHODS FOR CHECKING AVAILABLE CELLS
+// METHODS FOR CHECKING CELL AVAILABILITY
 Grid.prototype.availableCells = function () {
     // Return an array of cells that have no tiles
     var cells = [];
-    this.eachCell(function (x, y, tile) {
-        if (tile === null) {
-            cells.push({
-                x: x,
-                y: y
-            });
+    for (var x = 0; x < this.size; x++) {
+        for (var y = 0; y < this.size; y++) {
+            if (this.cells[x][y] === null)
+                cells.push({ x: x, y: y });
         }
-    });
+    }
     return cells;
 }
 Grid.prototype.cellsAvailable = function () {
     return this.availableCells().length > 0;
 }
-Grid.prototype.cellContent = function (cell) {
+Grid.prototype.tileAt = function (cell) {
     if (this.withinBounds(cell))
         return this.cells[cell.x][cell.y];
     else
         return null;
-}
-Grid.prototype.cellAvailable = function (cell) {
-    return this.cellContent(cell) === null;
 }
 Grid.prototype.randomAvailableCell = function () {
     // Find the first available random position
     var cells = this.availableCells();
     if (cells.length)
         return cells[Math.floor(Math.random() * cells.length)];
+}
+
+// ACTIONS ON CELLS
+Grid.prototype.insertTile = function (tile) {
+    this.cells[tile.x][tile.y] = tile;
+}
+Grid.prototype.moveTile = function (tile, cell) {
+    // Move a tile and its representation
+    this.cells[tile.x][tile.y] = null;
+    this.cells[cell.x][cell.y] = tile;
+    tile.x = cell.x;
+    tile.y = cell.y;
+}
+Grid.prototype.addRandomTile = function () {
+    // Adds a tile in a random position
+    if (!this.cellsAvailable()) return;
+    var value = Math.random() < 0.9 ? 2 : 4;
+    var tile = new Tile(this.randomAvailableCell(), value);
+    this.insertTile(tile);
+}
+Grid.prototype.removeTile = function (tile) {
+    this.cells[tile.x][tile.y] = null;
+}
+Grid.prototype.prepareTiles = function () {
+    // Save all tile positions and remove merger info
+    for (var x = 0; x < this.size; x++) {
+        for (var y = 0; y < this.size; y++) {
+            var tile = this.cells[x][y];
+            if (tile === null) continue;
+            tile.mergedFrom = null;
+            tile.previousPosition = { x: tile.x, y: tile.y };
+        }
+    }
+}
+
+// OTHER METHODS
+Grid.prototype.isTileMoved = function (x, y, vector) {
+    // If there's no tile in this position then return false
+    var cell = { x: x, y: y };
+    var tile = this.tileAt(cell);
+    if (tile === null)
+        return false;
+
+    // Only one merger per row traversal?
+    var positions = this.findFarthestPosition(cell, vector);
+    var next = this.tileAt(positions.next);
+    if (next !== null && next.value === tile.value && !next.mergedFrom) {
+        var merged = new Tile(positions.next, tile.value * 2);
+        merged.mergedFrom = [tile, next];
+
+        this.insertTile(merged);
+        this.removeTile(tile);
+
+        // Converge the two tiles' positions
+        tile.x = positions.next.x;
+        tile.y = positions.next.y;
+
+        // Update the score
+        this.score += merged.value;
+
+        // The mighty 2048 tile
+        if (merged.value === 2048) this.won = true;
+    }
+    else
+        this.moveTile(tile, positions.farthest);
+
+    if (cell.x !== tile.x || cell.y !== tile.y)
+        return true; // The tile moved from its original cell!
 }
 Grid.prototype.findFarthestPosition = function (cell, vector) {
     var previous;
@@ -75,34 +138,12 @@ Grid.prototype.findFarthestPosition = function (cell, vector) {
             y: previous.y + vector.y
         };
     } while (this.withinBounds(cell) &&
-             this.cellAvailable(cell));
+             this.tileAt(cell) === null);
 
     return {
         farthest: previous,
         next: cell // Used to check if a merge is required
     };
-}
-
-// METHODS FOR UPDATING CELLS
-Grid.prototype.eachCell = function (callback) {
-    // Call the callback function on every cell
-    for (var x = 0; x < this.size; x++) {
-        for (var y = 0; y < this.size; y++)
-            callback(x, y, this.cells[x][y]);
-    }
-}
-Grid.prototype.insertTile = function (tile) {
-    this.cells[tile.x][tile.y] = tile;
-}
-Grid.prototype.addRandomTile = function () {
-    // Adds a tile in a random position
-    if (!this.cellsAvailable()) return;
-    var value = Math.random() < 0.9 ? 2 : 4;
-    var tile = new Tile(this.randomAvailableCell(), value);
-    this.insertTile(tile);
-}
-Grid.prototype.removeTile = function (tile) {
-    this.cells[tile.x][tile.y] = null;
 }
 Grid.prototype.withinBounds = function (position) {
     return position.x >= 0 && position.x < this.size &&
