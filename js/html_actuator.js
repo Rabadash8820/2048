@@ -12,9 +12,9 @@ function HTMLActuator() {
 }
 
 HTMLActuator.prototype.actuate = function (grid, metadata) {
-    window.requestAnimationFrame(this.updateFrame.bind(this, grid, metadata));
+    window.requestAnimationFrame(this.drawFrame.bind(this, grid, metadata));
 };
-HTMLActuator.prototype.updateFrame = function (grid, metadata) {    
+HTMLActuator.prototype.drawFrame = function (grid, metadata) {    
     // Update scores
     this.drawScore(metadata.score);
     this.drawBestScore(metadata.bestScore);  

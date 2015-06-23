@@ -20,13 +20,9 @@ AutoSolver.prototype.decreaseRate = function () {
 
 // FUNCTIONS FOR SOVLING 2048
 AutoSolver.prototype.getNextMove = function (grid) {
-    // Get the best-direction vector in axis-direction form
     var corner = this.getTargetCorner(grid);
     var growVector = this.getGrowVector(grid);
     var vector = this.bestDirection(grid, corner, corner, growVector);
-
-    // Return the unique movement id for this axis/direction
-    return this.getMovementId(vector);
 }
 AutoSolver.prototype.bestDirection = function (grid, tile, corner, growVector) {
     // If there is no tile here, then swipe in the direction that creates the fewest large tiles
@@ -38,8 +34,7 @@ AutoSolver.prototype.bestDirection = function (grid, tile, corner, growVector) {
     var normal = this.getNeighborCell(grid, tile, normalVector);
     if (normal !== this.OFF_GRID && normal !== null && normal.value === tile.value)
         return { x: -normal.x, y: -normal.y };
-
-
+    
     // If that merge would be invalid, then try to merge with the neighboring tile in the grow direction
     var next = this.getNeighborCell(grid, tile, growVector);
     if (next !== this.OFF_GRID && next !== null && next.value === tile.value)
@@ -132,15 +127,4 @@ AutoSolver.prototype.oppositeCorner = function (grid, cell, growVector) {
         y: cell.y + grid.size * growVector.y - 1
     };
     return cell;
-}
-AutoSolver.prototype.getMovementId = function (vector) {
-    // 0: up, 1: right, 2: down, 3: left
-    if (vector === { x: 1, y: 0 })
-        return 1;
-    else if (vector === { x: -1, y: 0 })
-        return 3;
-    else if (vector === { x: 0, y: 1 })
-        return 2;
-    else if (vector === { x: 0, y: -1 })
-        return 0;
 }
