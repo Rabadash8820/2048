@@ -61,10 +61,7 @@ Grid.prototype.randomAvailableCell = function () {
 }
 
 // ACTIONS ON CELLS
-Grid.prototype.didTilesMove = function (vector) {
-    var tile;
-    var anyTileMoved = false;
-
+Grid.prototype.scoreDeltaFromSwipe = function (vector) {
     // Save all tile positions and remove merger info
     for (var x = 0; x < this.size; x++) {
         for (var y = 0; y < this.size; y++) {
@@ -75,21 +72,23 @@ Grid.prototype.didTilesMove = function (vector) {
         }
     }
 
-    // Traverse the grid in the right direction to see if any tiles moved
+    // Traverse the grid in the right direction to see if any tiles move
+    // Store the score increments produced by any merges
+    var anyTileMoved = false;
+    var increment = 0;
     var traversals = this.buildTraversals(vector);
     for (var i = 0; i < this.size; i++) {
         for (var j = 0; j < this.size; j++) {
-            var tileMoved = this.isTileMoved(traversals.x[i], traversals.y[j], vector);
-            if (tileMoved)
+            var tileInc = this.tileIncrement(traversals.x[i], traversals.y[j], vector);
+            if (tileInc !== -1) {
                 anyTileMoved = true;
+                increment += tileInc;
+            }
         }
     }
 
-    // Return whether any tiles were moved
-    return anyTileMoved;
-}
-Grid.prototype.insertTile = function (tile) {
-    this.cells[tile.x][tile.y] = tile;
+    // Return the score increment, or a sentinel value if no tiles moved
+    return anyTileMoved ? increment : -1;
 }
 Grid.prototype.moveTile = function (tile, cell) {
     // Move a tile and its representation
@@ -103,56 +102,40 @@ Grid.prototype.addRandomTile = function () {
     if (!this.cellsAvailable()) return;
     var value = Math.random() < 0.9 ? 2 : 4;
     var tile = new Tile(this.randomAvailableCell(), value);
-    this.insertTile(tile);
-}
-Grid.prototype.removeTile = function (tile) {
-    this.cells[tile.x][tile.y] = null;
-}
-Grid.prototype.prepareTiles = function () {
-    // Save all tile positions and remove merger info
-    for (var x = 0; x < this.size; x++) {
-        for (var y = 0; y < this.size; y++) {
-            var tile = this.cells[x][y];
-            if (tile === null) continue;
-            tile.mergedFrom = null;
-            tile.previousPosition = { x: tile.x, y: tile.y };
-        }
-    }
+    this.cells[tile.x][tile.y] = tile;
 }
 
 // HELPER FUNCTIONS
-Grid.prototype.isTileMoved = function (x, y, vector) {
-    // If there's no tile in this position then return false
+Grid.prototype.tileIncrement = function (x, y, vector) {
+    // If there's no tile in this position then return a sentinel value
+    var delta = 0;
     var cell = { x: x, y: y };
     var tile = this.tileAt(cell);
     if (tile === null)
-        return false;
+        return -1;
 
     // Only one merger per row traversal?
     var positions = this.findFarthestPosition(cell, vector);
     var next = this.tileAt(positions.next);
     if (next !== null && next.value === tile.value && !next.mergedFrom) {
+        // Merge these two tiles
         var merged = new Tile(positions.next, tile.value * 2);
         merged.mergedFrom = [tile, next];
-
-        this.insertTile(merged);
-        this.removeTile(tile);
-
-        // Converge the two tiles' positions
+        this.cells[merged.x][merged.y] = merged;
+        this.cells[tile.x][tile.y] = null;
         tile.x = positions.next.x;
         tile.y = positions.next.y;
 
-        // Update the score
-        this.score += merged.value;
-
-        // The mighty 2048 tile
-        if (merged.value === 2048) this.won = true;
+        // Increment the amount by which the score increases
+        delta = merged.value;
     }
     else
         this.moveTile(tile, positions.farthest);
 
+    // Return the score increment, or a sentinel value if the tile didn't move
     if (cell.x !== tile.x || cell.y !== tile.y)
-        return true; // The tile moved from its original cell!
+        return delta;
+    return -1;
 }
 Grid.prototype.findFarthestPosition = function (cell, vector) {
     var previous;

@@ -123,9 +123,13 @@ GameManager.prototype.move = function (vector) {
     if (this.state === this.JUST_LOST || this.state === this.JUST_WON)
         return;
 
-    // Move tiles on the grid in the specified direction
-    var tilesMoved = this.grid.didTilesMove(vector);
-    if (!tilesMoved) return;
+    // Move tiles on the grid in the specified direction and determine the resulting score increment
+    var delta = this.grid.scoreDeltaFromSwipe(vector);
+    if (delta === -1) return;
+    
+    // Update the score and game state
+    this.score += delta;
+    if (delta >= 2048) this.state = this.JUST_WON;
 
     // If tiles actually moved, then draw the next frame and return
     this.grid.addRandomTile();
