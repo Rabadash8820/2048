@@ -92,19 +92,24 @@ GameManager.prototype.movesAvailable = function () {
 GameManager.prototype.tileMatchesAvailable = function () {
     // Check for available matches between tiles (more expensive check)
 
-    // For each cell on the grid...
-    for (var x = 0; x < this.grid.size - 1; x++) {
+    // Check for available matches in vertical direction
+    for (var x = 0; x < this.grid.size; x++) {
         for (var y = 0; y < this.grid.size - 1; y++) {
-            // If there's no tile here then skip
             var tile = this.grid.tileAt({ x: x, y: y });
             if (tile === null) continue;
+            var belowTile = this.grid.tileAt({ x: x, y: y + 1 });
+            if (belowTile.value === tile.value)
+                return true;
+        }
+    }
 
-            // If this tile can merge with one below it or to the right, then return true
-            var aboveTile = this.grid.tileAt({ x: x, y: y - 1 });
+    // Check for available matches in horizontal direction
+    for (var y = 0; y < this.grid.size; y++) {
+        for (var x = 0; x < this.grid.size - 1; x++) {
+            var tile = this.grid.tileAt({ x: x, y: y });
+            if (tile === null) continue;
             var rightTile = this.grid.tileAt({ x: x + 1, y: y });
-            var canMergeUp    = (aboveTile !== null && aboveTile.value === tile.value);
-            var canMergeRight = (rightTile !== null && rightTile.value === tile.value);
-            if (canMergeUp || canMergeRight)
+            if (rightTile.value === tile.value)
                 return true;
         }
     }
