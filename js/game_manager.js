@@ -75,48 +75,6 @@ GameManager.prototype.addStartTiles = function (number) {
         this.grid.addRandomTile();
 }
 
-// FUNCTIONS
-GameManager.prototype.serialize = function () {
-    // Represent the current game as an object
-    return {
-        grid:        this.grid.serialize(),
-        score:       this.score,
-        lost:        this.lost,
-        won:         this.won,
-        keepPlaying: this.keepPlaying
-    };
-}
-GameManager.prototype.movesAvailable = function () {
-    return this.grid.cellsAvailable() || this.tileMatchesAvailable();
-}
-GameManager.prototype.tileMatchesAvailable = function () {
-    // Check for available matches between tiles (more expensive check)
-
-    // Check for available matches in vertical direction
-    for (var x = 0; x < this.grid.size; x++) {
-        for (var y = 0; y < this.grid.size - 1; y++) {
-            var tile = this.grid.tileAt({ x: x, y: y });
-            if (tile === null) continue;
-            var belowTile = this.grid.tileAt({ x: x, y: y + 1 });
-            if (belowTile.value === tile.value)
-                return true;
-        }
-    }
-
-    // Check for available matches in horizontal direction
-    for (var y = 0; y < this.grid.size; y++) {
-        for (var x = 0; x < this.grid.size - 1; x++) {
-            var tile = this.grid.tileAt({ x: x, y: y });
-            if (tile === null) continue;
-            var rightTile = this.grid.tileAt({ x: x + 1, y: y });
-            if (rightTile.value === tile.value)
-                return true;
-        }
-    }
-
-    return false;
-}
-
 // GAME EVENT LISTENERS
 GameManager.prototype.move = function (vector) {
     // Don't do anything if the game has ended
@@ -163,4 +121,46 @@ GameManager.prototype.solverSpeed = function (direction) {
         this.solver.increaseRate();
     else
         this.solver.decreaseRate();
+}
+
+// HELPER FUNCTIONS
+GameManager.prototype.serialize = function () {
+    // Represent the current game as an object
+    return {
+        grid: this.grid.serialize(),
+        score: this.score,
+        lost: this.lost,
+        won: this.won,
+        keepPlaying: this.keepPlaying
+    };
+}
+GameManager.prototype.movesAvailable = function () {
+    return this.grid.cellsAvailable() || this.tileMatchesAvailable();
+}
+GameManager.prototype.tileMatchesAvailable = function () {
+    // Check for available matches between tiles (more expensive check)
+
+    // Check for available matches in vertical direction
+    for (var x = 0; x < this.grid.size; x++) {
+        for (var y = 0; y < this.grid.size - 1; y++) {
+            var tile = this.grid.tileAt({ x: x, y: y });
+            if (tile === null) continue;
+            var belowTile = this.grid.tileAt({ x: x, y: y + 1 });
+            if (belowTile.value === tile.value)
+                return true;
+        }
+    }
+
+    // Check for available matches in horizontal direction
+    for (var y = 0; y < this.grid.size; y++) {
+        for (var x = 0; x < this.grid.size - 1; x++) {
+            var tile = this.grid.tileAt({ x: x, y: y });
+            if (tile === null) continue;
+            var rightTile = this.grid.tileAt({ x: x + 1, y: y });
+            if (rightTile.value === tile.value)
+                return true;
+        }
+    }
+
+    return false;
 }
