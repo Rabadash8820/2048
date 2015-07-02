@@ -223,7 +223,7 @@ hr {
 .game-container .game-message a.keep-playing-button { display: none; }
 .game-container .game-message.game-won { background: rgba(237, 194, 46, 0.5); color: #f9f6f2; }
 .game-container .game-message.game-won a.keep-playing-button { display: inline-block; }
-.game-container .game-message.game-won, .game-container .game-message.game-over { display: block; }
+.game-container .game-message.game-won, .game-container .game-message.game-lost { display: block; }
 .game-intro { float: left; line-height: 42px; margin-bottom: 0; }
 .game-explanation { margin-top: 50px; }
 
@@ -527,7 +527,7 @@ hr {
     .game-container .game-message a.keep-playing-button { display: none; }
     .game-container .game-message.game-won { background: rgba(237, 194, 46, 0.5); color: #f9f6f2; }
     .game-container .game-message.game-won a.keep-playing-button { display: inline-block; }
-    .game-container .game-message.game-won, .game-container .game-message.game-over { display: block; }
+    .game-container .game-message.game-won, .game-container .game-message.game-lost { display: block; }
 
     /* Grid */
     .grid-container { position: absolute; z-index: 1; }

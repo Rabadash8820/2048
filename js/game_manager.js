@@ -6,6 +6,12 @@ function GameManager(size, InputManager, Actuator, StorageManager, Solver) {
     this.actuator       = new Actuator();
     this.solver         = new Solver();
 
+    // Define game states
+    this.EARLY_GAME = 0;
+    this.JUST_WON   = 1;
+    this.JUST_LOST  = 2;
+    this.LATE_GAME  = 3;
+
     // Register game events
     this.inputManager.on(this.move.bind(this),         "move");
     this.inputManager.on(this.restart.bind(this),      "restart");
@@ -24,18 +30,16 @@ GameManager.prototype.setup = function (size) {
     var previousState = this.storageManager.getGameState();
     if (previousState !== null) {
         this.grid        = new Grid(previousState.grid.size, previousState.grid.cells);
-        this.score       = previousState.score;
-        this.lost        = previousState.lost;
-        this.won         = previousState.won;
+        this.score = previousState.score;
+        this.state = previousState.state
         this.keepPlaying = previousState.keepPlaying;
     }
 
     // Otherwise, begin a new game
     else {
         this.grid        = new Grid(size);
-        this.score       = 0;
-        this.lost        = false;
-        this.won         = false;
+        this.score = 0;
+        this.state = this.EARLY_GAME;
         this.keepPlaying = false;
 
         this.addStartTiles(2);
@@ -51,7 +55,7 @@ GameManager.prototype.actuate = function () {
 
     // If the game is over (game over only, not win), then clear the game state from local storage
     // Otherwise, update the saved game state
-    if (this.lost)
+    if (this.state === this.JUST_LOST)
         this.storageManager.clearGameState();
     else
         this.storageManager.setGameState(this.serialize());
@@ -59,10 +63,9 @@ GameManager.prototype.actuate = function () {
     // Pass the game's grid and metadata to the HTML actuator to draw a frame
     var metadata = {
         score:      this.score,
-        lost:       this.lost,
-        won:        this.won,
+        won:        this.state === this.JUST_WON,
+        lost:       this.state === this.JUST_LOST,
         bestScore:  this.storageManager.getBestScore(),
-        terminated: this.isGameTerminated()
     }
     this.actuator.actuate(this.grid, metadata);
 }
@@ -73,10 +76,6 @@ GameManager.prototype.addStartTiles = function (number) {
 }
 
 // FUNCTIONS
-GameManager.prototype.isGameTerminated = function () {
-    // Return true whether the game was lost, won, or quit by the player
-    return this.lost || (this.won && !this.keepPlaying);
-}
 GameManager.prototype.serialize = function () {
     // Represent the current game as an object
     return {
@@ -116,7 +115,7 @@ GameManager.prototype.tileMatchesAvailable = function () {
 // GAME EVENT LISTENERS
 GameManager.prototype.move = function (vector) {
     // Don't do anything if the game has ended
-    if (this.isGameTerminated())
+    if (this.state === this.JUST_LOST || this.state === this.JUST_WON)
         return;
 
     // Move tiles on the grid in the specified direction
@@ -126,20 +125,20 @@ GameManager.prototype.move = function (vector) {
     // If tiles actually moved, then draw the next frame and return
     this.grid.addRandomTile();
     if (!this.movesAvailable())
-        this.lost = true; // Game lost!
+        this.state = this.JUST_LOST;
     this.actuate();
     return;
 }
 GameManager.prototype.keepPlaying = function () {
     // Keep playing after winning (allows going over 2048)
-    this.keepPlaying = true;
-    this.actuator.continueGame();
+    this.state = this.LATE_GAME;
+    this.actuator.clearMessage();
 }
 GameManager.prototype.restart = function () {
     // Restart the game
     var gridSize = this.grid.size;
     this.storageManager.clearGameState();
-    this.actuator.continueGame(); // Clear the game won/lost message
+    this.actuator.clearMessage();
     this.setup(gridSize);
 }
 GameManager.prototype.stepSolver = function(){
