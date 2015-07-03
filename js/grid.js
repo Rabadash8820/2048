@@ -193,3 +193,30 @@ Grid.prototype.serialize = function () {
         cells: cellState
     };
 }
+Grid.prototype.tileMatchesAvailable = function () {
+    // Check for available matches between tiles (more expensive check)
+
+    // Check for available matches in vertical direction
+    for (var x = 0; x < this.size; x++) {
+        for (var y = 0; y < this.size - 1; y++) {
+            var tile = this.tileAt({ x: x, y: y });
+            if (tile === null) continue;
+            var belowTile = this.tileAt({ x: x, y: y + 1 });
+            if (belowTile.value === tile.value)
+                return true;
+        }
+    }
+
+    // Check for available matches in horizontal direction
+    for (var y = 0; y < this.size; y++) {
+        for (var x = 0; x < this.size - 1; x++) {
+            var tile = this.tileAt({ x: x, y: y });
+            if (tile === null) continue;
+            var rightTile = this.tileAt({ x: x + 1, y: y });
+            if (rightTile.value === tile.value)
+                return true;
+        }
+    }
+
+    return false;
+}

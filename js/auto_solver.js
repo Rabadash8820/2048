@@ -6,8 +6,6 @@ function AutoSolver() {
     this.MAX_RATE = 60;
     this.rate = 1;
 
-    this.OFF_GRID = -1;
-
     // Set bit values for the four relative swipe directions
     this.UP    = 1 << 0;
     this.LEFT  = 1 << 1;
@@ -34,59 +32,76 @@ AutoSolver.prototype.getNextMove = function (grid) {
     return this.bestDirection(grid, corner, growVector, normalVector);
 }
 AutoSolver.prototype.bestDirection = function (grid, tile, growVector, normalVector) {
-    // If there is no tile here, then swipe in the direction that creates the fewest merges
+    // If there is no tile here, then swipe in the default direction
+    if (tile !== null) {
+        var pos = document.getElementsByClassName("tile-position-" + tile.x + "-" + tile.y);
+        pos[0].className += " highlighted";
+    }
     if (tile === null)
         return this.getDefaultDirection(grid, growVector, normalVector);
 
-    // Otherwise, try to merge with a neighboring tile (normal then grow directions)
-    var normal = this.getNeighborCell(grid, tile, normalVector);
-    if (normal !== this.OFF_GRID && normal !== null && normal.value === tile.value)
+    // Get the immediately neighboring cells/tiles
+    var normalCell = { x: tile.x + normalVector.x, y: tile.y + normalVector.y };
+    var growCell = { x: tile.x + growVector.x, y: tile.y + growVector.y };
+    var normal = grid.tileAt(normalCell);
+    var grow = grid.tileAt(growCell);
+
+    // Try to merge in the normal or grow directions (in that order)
+    // For the grow direction, only do so if the neighbors are distant
+    var shouldSwipeNormal = this.shouldSwipe(grid, tile, normalVector);
+    if (shouldSwipeNormal)
         return { x: -normalVector.x, y: -normalVector.y };
-    var next = this.getNeighborCell(grid, tile, growVector);
-    if (next !== this.OFF_GRID && next !== null && next.value === tile.value)
+    var shouldSwipeGrow = this.shouldSwipe(grid, tile, growVector);
+    if (shouldSwipeGrow && grow === null)
         return { x: -growVector.x, y: -growVector.y };
 
-    // If no merges could be made...
-    // Determine which of this tile's neighbors (if any) has the minimum value (or null)
-    var minValue = null;
-    if (normal !== null && next !== null)
-        minValue = Math.min(normal.value, next.value);
-    var normalMin = (normal !== this.OFF_GRID && (
-                        (normal === null && minValue === null) ||
-                        (normal !== null && normal.value === minValue)
-                    ));
-    var nextMin   = (next !== this.OFF_GRID && (
-                        (next === null && minValue === null) ||
-                        (next !== null && next.value === minValue)
-                    ));    
-
-    // Move recursively to the neighboring cell that has the min value (priority given to normal)
-    // Grow vector and corner are adjusted so that cells will "snake" around the grid as they merge
-    if (normalMin) {
-        if (next === this.OFF_GRID) {
-            var reverseGrowVector = { x: -growVector.x, y: -growVector.y };
-            return this.bestDirection(grid, normal, reverseGrowVector, normalVector);
-        }
-        else
-            return this.bestDirection(grid, normal, growVector, normalVector);
+    // If no merges could be made then move recursively in the grow direction
+    // Unless the grow tile is larger than this one...then move in the normal direction
+    // If the grow direction went off the grid, then move to the normal cell with a reversed grow direction
+    // That way, tiles will "snake" around the grid as they merge
+    var normalCell = { x: tile.x + normalVector.x, y: tile.y + normalVector.y };
+    var growCell   = { x: tile.x + growVector.x,   y: tile.y + growVector.y   };
+    var normal = grid.tileAt(normalCell);
+    var grow   = grid.tileAt(growCell);
+    if (grid.withinBounds(growCell) && (grow === null || grow.value <= tile.value))
+        return this.bestDirection(grid, grow, growVector, normalVector);
+    if (grid.withinBounds(growCell) && grow.value > tile.value)
+        return this.bestDirection(grid, normal, growVector, normalVector);
+    if (grid.withinBounds(normalCell)) {
+        var reverseGrowVector = { x: -growVector.x, y: -growVector.y };
+        return this.bestDirection(grid, normal, reverseGrowVector, normalVector);
     }
-    if (nextMin)
-        return this.bestDirection(grid, next, growVector, normalVector);
 
-    // If there are no cells left to move to, then swipe in the direction that
-    // creates the fewest merges of all the allowed directions
+    // If both directions went off the grid, then
+    // there are no cells left to move to, so swipe in the default direction
     return this.getDefaultDirection(grid, growVector, normalVector);
+}
+AutoSolver.prototype.shouldSwipe = function (grid, tile, vector) {
+    var c = 1;
+    var neighbor = { x: tile.x + vector.x, y: tile.y + vector.y };
+    while (grid.withinBounds(neighbor)) {
+        var normal = grid.tileAt(neighbor);
+        if (normal !== null)
+            return (normal.value === tile.value);
+        c++;
+        var neighbor = { x: tile.x + c * vector.x, y: tile.y + c * vector.y };
+    }
+    return false;
 }
 
 // HELPER FUNCTIONS
 AutoSolver.prototype.getTargetCorner = function (grid) {
+    // TO DO: the triangular half of the grid with the largest sum points at the target corner
+
     var cell = {
         x: 0,
         y: grid.size - 1
     };
     return cell;
 }
-AutoSolver.prototype.getGrowVector = function (grid) {
+AutoSolver.prototype.getGrowVector = function (grid, cornerCell) {
+    // TO DO: the triangular half of the grid that bisects the corner and has the largest sum contains the grow vector
+
     return {
         x: 0,
         y: -1
@@ -129,16 +144,6 @@ AutoSolver.prototype.getNormalVector = function (grid, cornerCell, growVector) {
             return { x: 1, y: 0 };
     }
 }
-AutoSolver.prototype.getNeighborCell = function (grid, cell, vector) {
-    // Get the neighboring cell
-    cell = {
-        x: cell.x + vector.x,
-        y: cell.y + vector.y
-    };
-
-    // If that cell is on the grid then return its tile, otherwise return null
-    return (grid.withinBounds(cell)) ? grid.cells[cell.x][cell.y] : this.OFF_GRID;
-}
 AutoSolver.prototype.getDefaultDirection = function (grid, grow, normal) {
     // Determine the other two other relative swipe directions
     var reverseNormal = { x: -normal.x, y: -normal.y };
@@ -166,19 +171,15 @@ AutoSolver.prototype.getDefaultDirection = function (grid, grow, normal) {
     else if (normal.x === 0 && normal.y === 1) n = this.DOWN;
     else n = this.RIGHT;
 
-    // Use bit fields to determine the intersection of the set of allowed directions and
-    // the set of directions that increment the score by the smallest amount
-    // ****** WILL THIS SET-INTERSECTION ALWAYS BE NON-NULL?? *******
-    var minimum = this.getMinimumVectors(grid);
+    // Define a bit field to represent the set of allowed directions
     var allowed = this.getAllowedVectors(grid, reverseNormal, reverseGrow, grow, normal);
-    var allowedMin = minimum & allowed;
 
     // Return a direction from this intersection with the priority:
     // reverseNormal, then reverseGrow, then grow, then normal
-    if (allowedMin & rn) return reverseNormal;
-    if (allowedMin & rg) return reverseGrow;
-    if (allowedMin & g)  return grow;
-    if (allowedMin & n)  return normal;
+    if (allowed & rn) return reverseNormal;
+    if (allowed & rg) return reverseGrow;
+    if (allowed & g)  return grow;
+    if (allowed & n)  return normal;
 }
 AutoSolver.prototype.getMinimumVectors = function (grid) {
     // Calculate how much the score would increment by swiping in the vertical direction

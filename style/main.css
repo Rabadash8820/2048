@@ -243,6 +243,7 @@ hr {
 .grid-cell:last-child { margin-right: 0; }
 
 /* Tiles */
+.highlighted { border: 5px solid blue; }
 .tile-container { position: absolute; z-index: 2; }
 .tile {
     position: absolute;
