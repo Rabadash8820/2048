@@ -15,6 +15,7 @@ Other notable contributors:
  - [chrisprice](https://github.com/chrisprice) added custom code for swipe handling on mobile
  - [marcingajda](https://github.com/marcingajda) made swipes work on Windows Phone
  - [mgarciaisaia](https://github.com/mgarciaisaia) added support for Android 2.3
+ - [Rabadash8820] (https://github.com/Rabadash8820) added the AutoSolver feature
 
 Many thanks to [rayhaanj](https://github.com/rayhaanj), [Mechazawa](https://github.com/Mechazawa), [grant](https://github.com/grant), [remram44](https://github.com/remram44) and [ghoullier](https://github.com/ghoullier) for the many other good contributions.
 
