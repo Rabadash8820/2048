@@ -134,6 +134,6 @@ GameManager.prototype.serialize = function () {
         keepPlaying: this.keepPlaying
     };
 }
-Grid.prototype.movesAvailable = function () {
+GameManager.prototype.movesAvailable = function () {
     return this.grid.cellsAvailable() || this.grid.tileMatchesAvailable();
 }
