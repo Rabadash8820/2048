@@ -220,3 +220,10 @@ Grid.prototype.tileMatchesAvailable = function () {
 
     return false;
 }
+Grid.prototype.isCornerCell = function (cell) {
+    var isCorner = ((cell.x === 0 && cell.y === 0) ||
+                    (cell.x === 0 && cell.y === this.size - 1) ||
+                    (cell.x === this.size - 1 && 0) ||
+                    (cell.x === this.size - 1 && cell.y === this.size - 1));
+    return isCorner;
+}

@@ -28,16 +28,24 @@ AutoSolver.prototype.getNextMove = function (grid) {
     var cornerCell = this.getTargetCorner(grid);
     var growVector = this.getGrowVector(grid, cornerCell);
     var normalVector = this.getNormalVector(grid, cornerCell, growVector);
-    var corner = grid.cells[cornerCell.x][cornerCell.y];
-    return this.bestDirection(grid, corner, growVector, normalVector);
+    return this.bestDirection(grid, cornerCell, growVector, normalVector);
 }
-AutoSolver.prototype.bestDirection = function (grid, tile, growVector, normalVector, mergeVector) {
-    // If there is no tile here, then swipe in the default direction
-    if (tile !== null) {
-        var pos = document.getElementsByClassName("tile-position-" + tile.x + "-" + tile.y);
+AutoSolver.prototype.bestDirection = function (grid, cell, growVector, normalVector, mergeVector) {
+    // ***** FOR DEBUGGING *****
+    if (grid.tileAt(cell) !== null) {
+        var pos = document.getElementsByClassName("tile-position-" + cell.x + "-" + cell.y);
         pos[0].className += " highlighted";
     }
+
+    // If there is no tile here...
+    var tile = grid.tileAt(cell);
     if (tile === null) {
+        // If this tile is the target corner, then immediately swipe in the reverse grow direction
+        if (grid.isCornerCell(cell))
+            return this.reverse(growVector);
+
+        // Otherwise, swipe in the default direction, unless it would ruin the merge
+        // In that case, swipe in the merge direction
         var defaultDir = this.getDefaultDirection(grid, growVector, normalVector);
         var reverseNormalVector = this.reverse(normalVector);
         if (mergeVector === undefined) return defaultDir;
@@ -45,10 +53,9 @@ AutoSolver.prototype.bestDirection = function (grid, tile, growVector, normalVec
     }
 
     // Get the immediately neighboring cells/tiles
-    var normalCell = { x: tile.x + normalVector.x, y: tile.y + normalVector.y };
-    var growCell   = { x: tile.x + growVector.x,   y: tile.y + growVector.y   };
-    var normal = grid.tileAt(normalCell);
-    var grow   = grid.tileAt(growCell);
+    var normalCell = { x: cell.x + normalVector.x, y: cell.y + normalVector.y };
+    var growCell   = { x: cell.x + growVector.x,   y: cell.y + growVector.y   };
+    var grow       = grid.tileAt(growCell);
 
     // Try to merge in the normal or grow directions (in that order)
     // For the grow direction, only do so if the neighbors are distant
@@ -66,14 +73,15 @@ AutoSolver.prototype.bestDirection = function (grid, tile, growVector, normalVec
     // If the grow direction went off the grid, then move to the normal cell with a reversed grow direction
     // That way, tiles will "snake" around the grid as they merge
     if (grid.withinBounds(growCell) && (grow === null || grow.value <= tile.value))
-        return this.bestDirection(grid, grow, growVector, normalVector, mergeVector);
+        return this.bestDirection(grid, growCell, growVector, normalVector, mergeVector);
     if (grid.withinBounds(growCell) && grow.value > tile.value)
-        return this.bestDirection(grid, normal, growVector, normalVector, mergeVector);
-    if (grid.withinBounds(normalCell) && mergeVector === null)
-        return this.bestDirection(grid, normal, this.reverse(growVector), normalVector, mergeVector);
+        return this.bestDirection(grid, normalCell, growVector, normalVector, mergeVector);
+    if (grid.withinBounds(normalCell))
+        return this.bestDirection(grid, normalCell, this.reverse(growVector), normalVector, mergeVector);
 
-    // If both directions went off the grid, then
-    // there are no cells left to move to, so swipe in the default direction
+    // If both directions went off the grid, then there are no cells left to move to
+    // so swipe in the default direction, unless it would ruin the merge
+    // In that case, swipe in the merge direction
     var defaultDir = this.getDefaultDirection(grid, growVector, normalVector);
     var reverseNormalVector = this.reverse(normalVector);
     if (mergeVector === undefined) return defaultDir;
